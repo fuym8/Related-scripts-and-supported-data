@@ -1,0 +1,70 @@
+library(TwoSampleMR) #加载R包
+###计算及解读MR结果
+library(TwoSampleMR)
+exposure_exp <- extract_instruments(
+  outcomes='ukb-b-19732',
+  clump=TRUE, r2=0.01,
+  kb=5000,access_token = NULL
+)
+head(exposure_exp)
+write.csv(exposure_exp,file="exposure_clumped.csv")
+# [1] 80 15
+
+outcome_out <- extract_outcome_data(
+  snps=b$SNP,
+  outcomes='finn-b-E4_LIPOPROT',
+  proxies = FALSE,
+  maf_threshold = 0.01,
+  access_token = NULL
+  )
+dim(out)
+write.csv(outcome_out,file="outcome.csv")
+# [1] 80 16
+##IV的效应等位基因（effect allele）对齐
+mydata <- harmonise_data(
+  exposure_dat=exposure_exp,
+  outcome_dat=outcome_out,
+  action= 2
+)
+write.csv(mydata,file="data.csv")
+data(SummaryStats)
+res <- mr(mydata)
+res
+##异质性检验
+het <- mr_heterogeneity(mydata)
+het
+mr(mydata,method_list=c('mr_ivw_mre')) #使用随机效应模型
+##多效性检验
+pleio <- mr_pleiotropy_test(mydata)
+pleio
+##逐个剔除检验
+single <- mr_leaveoneout(mydata)
+mr_leaveoneout_plot(single)
+##绘制散点图
+mr_scatter_plot(res,mydata)
+ ##绘制森林图
+res_single <- mr_singlesnp(mydata)
+mr_forest_plot(res_single)
+##绘制敏感性分析图
+
+##绘制漏斗图
+mr_funnel_plot(res_single)
+
+#安装MR-PRESSO
+#BiocManager::install("remotes")
+#library(devtools)
+#library(Rcpp)
+devtools::install_github("rondolab/MR-PRESSO",force = TRUE) 
+#remotes::install_github("rondolab/MR-PRESSO",build = FALSE,force = TRUE) 
+#devtools::install_github("rondolab/MR-PRESSO",force = TRUE)# 
+library(MR-PRESSO)
+data(data) # 加载数据集
+data(dat) # 查看数据集
+data = as.data.frame(data)
+#Two Sample MR
+mr_presso(BetaOutcome ="beta.outcome", BetaExposure = "beta.exposure", SdOutcome ="se.outcome", SdExposure = "se.exposure", 
+          OUTLIERtest = TRUE,DISTORTIONtest = TRUE, data = mydata, NbDistribution = 10000,  
+          SignifThreshold = 0.05)
+#基于多变量MR下的水平多效性检验
+mr_presso(BetaOutcome ="Y_effect", BetaExposure = c("E1_effect","E2_effect"), SdOutcome = "Y_se", SdExposure =c("E1_se", "E2_se"), 
+          OUTLIERtest = TRUE, DISTORTIONtest =TRUE, data = SummaryStats, NbDistribution = 1000,  SignifThreshold = 0.05)
