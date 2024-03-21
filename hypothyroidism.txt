@@ -12,7 +12,7 @@ write.csv(exposure_exp,file="exposure_clumped.csv")
 
 outcome_out <- extract_outcome_data(
   snps=b$SNP,
-  outcomes='finn-b-N14_ENDOMETRIOSIS_INTESTINE',
+  outcomes='finn-b-E4_PCOS',
   proxies = FALSE,
   maf_threshold = 0.01,
   access_token = NULL
