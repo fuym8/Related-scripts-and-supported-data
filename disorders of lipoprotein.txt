@@ -11,13 +11,13 @@ write.csv(exposure_exp,file="exposure_clumped.csv")
 # [1] 80 15
 
 outcome_out <- extract_outcome_data(
-  snps=b$SNP,
+  snps=exposure_exp$SNP,
   outcomes='finn-b-E4_LIPOPROT',
   proxies = FALSE,
   maf_threshold = 0.01,
   access_token = NULL
   )
-dim(out)
+dim(outcome_out)
 write.csv(outcome_out,file="outcome.csv")
 # [1] 80 16
 ##IV的效应等位基因（effect allele）对齐
