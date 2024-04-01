@@ -1,0 +1,57 @@
+#打开R包
+library(TwoSampleMR)
+library(data.table)
+library(R.utils)
+library(MungeSumstats)
+library(tidyverse)
+
+#设置工作环境
+setwd("D:/MR/PCOS")
+
+#读取本地暴露数据
+a<-fread(file="finngen_R9_E4_PCOS_CONCORTIUM.gz",header=T)
+head(a)
+
+#相关性设置，并将文件放到TwoSampleMR包所在文件夹
+b<-subset(a,pval<5e-08)
+head(b)
+write.csv(b, file="exposure.csv") 
+exp_dat_clumped<-read_exposure_data(filename = "exposure.csv",sep = ",",snp_col = "rsids",beta_col = "beta",se_col = "sebeta",effect_allele_col = "alt",other_allele_col = "ref",eaf_col = "eaf",clump = TRUE)
+
+out <- extract_outcome_data(
+  snps=exp_dat_clumped$SNP,
+  outcomes='ukb-b-19732',
+  proxies = FALSE,
+  maf_threshold = 0.01,
+  access_token = NULL
+dim(out)
+write.csv(out,file="outcome.csv")
+# [1] 80 16
+##IV的效应等位基因（effect allele）对齐
+mydata <- harmonise_data(
+  exposure_dat=exp_dat_clumped,
+  outcome_dat=out,
+  action= 2
+)
+write.csv(mydata,file="data.csv")
+res <- mr(mydata)
+res
+##异质性检验
+het <- mr_heterogeneity(mydata)
+het
+mr(mydata,method_list=c('mr_ivw_mre')) #使用随机效应模型
+##多效性检验
+pleio <- mr_pleiotropy_test(mydata)
+pleio
+##逐个剔除检验
+single <- mr_leaveoneout(mydata)
+mr_leaveoneout_plot(single)
+##绘制散点图
+mr_scatter_plot(res,mydata)
+ ##绘制森林图
+res_single <- mr_singlesnp(mydata)
+mr_forest_plot(res_single)
+##绘制敏感性分析图
+
+##绘制漏斗图
+mr_funnel_plot(res_single)
